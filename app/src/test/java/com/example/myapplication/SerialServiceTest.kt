@@ -217,6 +217,99 @@ class SerialServiceTest {
         assertEquals("test", readData?.let { String(it) })
     }
     
+    @Test
+    fun `test send and read event code with checksum`() = runTest {
+        // Setup UsbManager to return our mock driver
+        val drivers = listOf(mockUsbSerialDriver)
+        mockUsbManagerToReturnDrivers(drivers)
+        
+        // Setup permission check to have permission
+        `when`(mockUsbManager.hasPermission(mockUsbDevice)).thenReturn(true)
+        
+        // Setup connection
+        `when`(mockUsbManager.openDevice(mockUsbDevice)).thenReturn(mockUsbConnection)
+        
+        // Call discover devices to connect
+        serialService.discoverDevices()
+        
+        // Setup write behavior to capture the sent data
+        val sentData = ArrayList<ByteArray>()
+        doAnswer { invocation ->
+            val data = invocation.getArgument<ByteArray>(0)
+            sentData.add(data.clone())
+            Unit
+        }.`when`(mockUsbSerialPort).write(any(), anyInt())
+        
+        // Send event code
+        val eventCode = "BUTTON_PRESS"
+        val sendResult = serialService.sendEventCode(eventCode)
+        assertTrue(sendResult)
+        
+        // Verify sent data includes checksum
+        assertEquals(1, sentData.size)
+        val sentBytes = sentData[0]
+        assertEquals(eventCode.length + 1, sentBytes.size) // +1 for checksum
+        
+        // Extract event code and checksum
+        val sentEventCodeBytes = sentBytes.copyOf(eventCode.length)
+        val sentChecksum = sentBytes[eventCode.length]
+        
+        // Verify event code
+        assertEquals(eventCode, String(sentEventCodeBytes))
+        
+        // Verify checksum is valid
+        assertTrue(CRC8.validate(sentEventCodeBytes, sentChecksum))
+        
+        // Setup read behavior to return the sent data
+        doAnswer { invocation ->
+            val buffer = invocation.getArgument<ByteArray>(0)
+            System.arraycopy(sentBytes, 0, buffer, 0, sentBytes.size)
+            sentBytes.size
+        }.`when`(mockUsbSerialPort).read(any(), anyInt())
+        
+        // Read event code
+        val readEventCode = serialService.readEventCode()
+        
+        // Verify read event code
+        assertEquals(eventCode, readEventCode)
+    }
+    
+    @Test
+    fun `test checksum validation failure`() = runTest {
+        // Setup UsbManager to return our mock driver
+        val drivers = listOf(mockUsbSerialDriver)
+        mockUsbManagerToReturnDrivers(drivers)
+        
+        // Setup permission check to have permission
+        `when`(mockUsbManager.hasPermission(mockUsbDevice)).thenReturn(true)
+        
+        // Setup connection
+        `when`(mockUsbManager.openDevice(mockUsbDevice)).thenReturn(mockUsbConnection)
+        
+        // Call discover devices to connect
+        serialService.discoverDevices()
+        
+        // Setup read behavior to return invalid checksum
+        val eventCode = "BUTTON_PRESS"
+        val invalidChecksum: Byte = (CRC8.calculate(eventCode) + 1).toByte() // Invalid checksum
+        
+        val dataWithInvalidChecksum = ByteArray(eventCode.length + 1)
+        System.arraycopy(eventCode.toByteArray(), 0, dataWithInvalidChecksum, 0, eventCode.length)
+        dataWithInvalidChecksum[eventCode.length] = invalidChecksum
+        
+        doAnswer { invocation ->
+            val buffer = invocation.getArgument<ByteArray>(0)
+            System.arraycopy(dataWithInvalidChecksum, 0, buffer, 0, dataWithInvalidChecksum.size)
+            dataWithInvalidChecksum.size
+        }.`when`(mockUsbSerialPort).read(any(), anyInt())
+        
+        // Read event code with invalid checksum
+        val readEventCode = serialService.readEventCode()
+        
+        // Verify validation failed
+        assertNull(readEventCode)
+    }
+    
     // Helper method to mock UsbManager to return specific drivers
     private fun mockUsbManagerToReturnDrivers(drivers: List<UsbSerialDriver>) {
         // This is a simplified mock - in a real test you would need to properly mock

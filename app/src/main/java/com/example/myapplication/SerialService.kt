@@ -227,6 +227,38 @@ class SerialService(private val context: Context) {
     }
     
     /**
+     * Sends an event code with CRC-8 checksum
+     * 
+     * @param eventCode The event code to send
+     * @return True if the send was successful
+     */
+    fun sendEventCode(eventCode: String): Boolean {
+        if (!connected || usbSerialPort == null) {
+            Log.e(TAG, "Cannot send event code: not connected")
+            return false
+        }
+        
+        return try {
+            // Calculate CRC-8 checksum
+            val checksum = CRC8.calculate(eventCode)
+            
+            // Create data packet with event code and checksum
+            val dataPacket = ByteArray(eventCode.length + 1)
+            System.arraycopy(eventCode.toByteArray(), 0, dataPacket, 0, eventCode.length)
+            dataPacket[eventCode.length] = checksum
+            
+            Log.d(TAG, "Sending event code: $eventCode with checksum: ${checksum.toInt() and 0xFF}")
+            
+            // Send the data packet
+            usbSerialPort!!.write(dataPacket, 1000) // 1000ms timeout
+            true
+        } catch (e: IOException) {
+            Log.e(TAG, "Error sending event code", e)
+            false
+        }
+    }
+    
+    /**
      * Reads data from the connected device
      */
     fun readData(maxLength: Int = 1024): ByteArray? {
@@ -245,6 +277,45 @@ class SerialService(private val context: Context) {
             }
         } catch (e: IOException) {
             Log.e(TAG, "Error reading data", e)
+            null
+        }
+    }
+    
+    /**
+     * Reads an event code with checksum validation
+     * 
+     * @param maxLength Maximum length of the event code
+     * @return The validated event code or null if validation fails
+     */
+    fun readEventCode(maxLength: Int = 1024): String? {
+        if (!connected || usbSerialPort == null) {
+            Log.e(TAG, "Cannot read event code: not connected")
+            return null
+        }
+        
+        val buffer = ByteArray(maxLength)
+        return try {
+            val len = usbSerialPort!!.read(buffer, 1000) // 1000ms timeout
+            if (len > 1) { // At least one byte for data and one for checksum
+                // Extract event code and checksum
+                val eventCodeBytes = buffer.copyOf(len - 1)
+                val checksum = buffer[len - 1]
+                
+                // Validate checksum
+                if (CRC8.validate(eventCodeBytes, checksum)) {
+                    val eventCode = String(eventCodeBytes)
+                    Log.d(TAG, "Received valid event code: $eventCode")
+                    eventCode
+                } else {
+                    Log.e(TAG, "Checksum validation failed for received data")
+                    null
+                }
+            } else {
+                Log.e(TAG, "Received data too short for event code with checksum")
+                null
+            }
+        } catch (e: IOException) {
+            Log.e(TAG, "Error reading event code", e)
             null
         }
     }
