@@ -197,7 +197,7 @@ class SerialServiceTest {
         `when`(mockUsbManager.openDevice(mockUsbDevice)).thenReturn(mockUsbConnection)
         
         // Setup read/write behavior
-        `when`(mockUsbSerialPort.write(any(), anyInt())).thenReturn(5)
+        `when`(mockUsbSerialPort.write(any(), anyInt())).thenReturn(Unit)
         doAnswer { invocation ->
             val buffer = invocation.getArgument<ByteArray>(0)
             val testData = "test".toByteArray()
