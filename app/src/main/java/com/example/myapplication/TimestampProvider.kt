@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicLong
  * - For app-wide consistent timestamps: TimestampProvider.getInstance()
  * - For component-specific timing: new TimestampProvider()
  */
-class TimestampProvider {
+open class TimestampProvider {
     // Using AtomicLong to ensure thread-safety for the start time
     private val startTimeMillis = AtomicLong(System.currentTimeMillis())
     
@@ -29,7 +29,7 @@ class TimestampProvider {
      * 
      * @return String representation of current time in ISO 8601 format
      */
-    fun getAbsoluteTime(): String {
+    open fun getAbsoluteTime(): String {
         val currentTimeMillis = System.currentTimeMillis()
         return synchronized(dateFormat) {
             dateFormat.format(Date(currentTimeMillis))
@@ -42,7 +42,7 @@ class TimestampProvider {
      * 
      * @return Long representing elapsed milliseconds since initialization
      */
-    fun getRelativeTimeMillis(): Long {
+    open fun getRelativeTimeMillis(): Long {
         return System.currentTimeMillis() - startTimeMillis.get()
     }
 
@@ -50,7 +50,7 @@ class TimestampProvider {
      * Resets the relative time counter to the current time.
      * Useful for restarting timing for a new experiment or session.
      */
-    fun resetRelativeTime() {
+    open fun resetRelativeTime() {
         startTimeMillis.set(System.currentTimeMillis())
     }
 
