@@ -26,8 +26,8 @@ import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.IOException
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 
 @ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
@@ -76,7 +76,7 @@ class SerialServiceTest {
     @Test
     fun `test device discovery with no devices found`() = runTest {
         // Setup UsbManager to return empty list of drivers
-        `when`(mockUsbManager.deviceList).thenReturn(emptyMap())
+        `when`(mockUsbManager.deviceList).thenReturn(HashMap<String, UsbDevice>())
         
         // Call discover devices
         serialService.discoverDevices()
@@ -202,7 +202,7 @@ class SerialServiceTest {
             val buffer = invocation.getArgument<ByteArray>(0)
             val testData = "test".toByteArray()
             System.arraycopy(testData, 0, buffer, 0, testData.size)
-            testData.size
+            return@thenAnswer testData.size
         }
         
         // Call discover devices to connect
@@ -223,7 +223,9 @@ class SerialServiceTest {
         // the UsbSerialProber and its findAllDrivers method
         
         // For now, we're just setting up the basic behavior needed for the tests
-        val deviceMap = mapOf(0 to mockUsbDevice)
+        val deviceMap = HashMap<String, UsbDevice>().apply {
+            put("0", mockUsbDevice)
+        }
         `when`(mockUsbManager.deviceList).thenReturn(deviceMap)
     }
 }
