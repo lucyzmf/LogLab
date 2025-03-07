@@ -1,6 +1,6 @@
 package com.example.myapplication
 
-import android.util.Log
+import android.util.Log as AndroidLog
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
@@ -55,7 +55,7 @@ class SessionLogger(
         )
 
         eventBuffer.add(event)
-        Log.d(TAG, "Logged event: $eventCode at ${event.absoluteTime}")
+        AndroidLog.d(TAG, "Logged event: $eventCode at ${event.absoluteTime}")
         return event
     }
 
@@ -69,7 +69,7 @@ class SessionLogger(
      */
     suspend fun clearBuffer() = mutex.withLock {
         eventBuffer.clear()
-        Log.d(TAG, "Event buffer cleared")
+        AndroidLog.d(TAG, "Event buffer cleared")
     }
 
     /**
@@ -92,7 +92,7 @@ class SessionLogger(
     suspend fun flushToFile(file: File, clearBufferAfterFlush: Boolean = true): Boolean = mutex.withLock {
         try {
             if (eventBuffer.isEmpty()) {
-                Log.d(TAG, "Buffer empty, nothing to flush")
+                AndroidLog.d(TAG, "Buffer empty, nothing to flush")
                 return true
             }
 
@@ -101,16 +101,16 @@ class SessionLogger(
                 writer.write(formattedLog)
             }
 
-            Log.d(TAG, "Flushed ${eventBuffer.size} events to ${file.absolutePath}")
+            AndroidLog.d(TAG, "Flushed ${eventBuffer.size} events to ${file.absolutePath}")
             
             if (clearBufferAfterFlush) {
                 eventBuffer.clear()
-                Log.d(TAG, "Buffer cleared after flush")
+                AndroidLog.d(TAG, "Buffer cleared after flush")
             }
             
             return true
         } catch (e: Exception) {
-            Log.e(TAG, "Error flushing to file: ${e.message}", e)
+            AndroidLog.e(TAG, "Error flushing to file: ${e.message}", e)
             return false
         }
     }
