@@ -48,9 +48,11 @@ class SessionLoggerTest {
     }
 
     @After
-    fun tearDown() = runBlocking {
-        csvLogger.clearBuffer()
-        jsonLogger.clearBuffer()
+    fun tearDown() {
+        runBlocking {
+            csvLogger.clearBuffer()
+            jsonLogger.clearBuffer()
+        }
     }
 
     @Test
