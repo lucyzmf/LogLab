@@ -40,7 +40,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -56,9 +55,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-}
-
-dependencies {
+    
     // Serial port dependency
     implementation("com.github.mik3y:usb-serial-for-android:3.4.0")
 
@@ -69,6 +66,3 @@ dependencies {
     implementation("androidx.work:work-runtime:2.7.1")
     implementation("androidx.work:work-runtime-ktx:2.7.1")
 }
-
-// Apply the Google services plugin if needed
-apply(plugin = "com.google.gms.google-services")
