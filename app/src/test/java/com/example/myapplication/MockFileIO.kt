@@ -32,12 +32,15 @@ class MockFile(private val path: String) : File(path) {
     override fun renameTo(dest: File): Boolean = !throwExceptionOnWrite
     
     override fun createNewFile(): Boolean = !throwExceptionOnWrite
-    
-    override fun copyTo(target: File, overwrite: Boolean, bufferSize: Int): File {
+
+    // Custom copy method, not overriding any method from File
+    fun copyTo(target: File, overwrite: Boolean = false, bufferSize: Int = 1024): File {
         if (throwExceptionOnWrite) {
             throw IOException("Mock copy exception")
         }
-        (target as? MockFile)?.setContent(content.toString())
+        if (target is MockFile) {
+            target.setContent(content.toString())
+        }
         return target
     }
 }
