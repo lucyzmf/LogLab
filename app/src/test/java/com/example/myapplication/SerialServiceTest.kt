@@ -198,12 +198,12 @@ class SerialServiceTest {
         
         // Setup read/write behavior
         `when`(mockUsbSerialPort.write(any(), anyInt())).thenReturn(5)
-        `when`(mockUsbSerialPort.read(any(), anyInt())).thenAnswer { invocation ->
+        doAnswer { invocation ->
             val buffer = invocation.getArgument<ByteArray>(0)
             val testData = "test".toByteArray()
             System.arraycopy(testData, 0, buffer, 0, testData.size)
-            return@thenAnswer testData.size
-        }
+            testData.size
+        }.`when`(mockUsbSerialPort).read(any(), anyInt())
         
         // Call discover devices to connect
         serialService.discoverDevices()
