@@ -57,7 +57,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     
     // Serial port dependency
-    implementation ("com.github.mik3y:usb-serial-for-android:3.8.1")
+    implementation("com.github.mik3y:usb-serial-for-android:3.8.1")
 
     // Google Drive API
     implementation("com.google.android.gms:play-services-auth:20.0.0")
@@ -65,4 +65,9 @@ dependencies {
     // Workload manager
     implementation("androidx.work:work-runtime:2.7.1")
     implementation("androidx.work:work-runtime-ktx:2.7.1")
+    
+    // Coroutines for thread safety
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 }
