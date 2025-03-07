@@ -26,6 +26,20 @@ class MockFile(private val path: String) : File(path) {
     fun appendContent(text: String) {
         content.append(text)
     }
+    
+    override fun delete(): Boolean = true
+    
+    override fun renameTo(dest: File): Boolean = !throwExceptionOnWrite
+    
+    override fun createNewFile(): Boolean = !throwExceptionOnWrite
+    
+    override fun copyTo(target: File, overwrite: Boolean, bufferSize: Int): File {
+        if (throwExceptionOnWrite) {
+            throw IOException("Mock copy exception")
+        }
+        (target as? MockFile)?.setContent(content.toString())
+        return target
+    }
 }
 
 /**

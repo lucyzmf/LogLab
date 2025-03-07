@@ -106,4 +106,44 @@ class SessionLoggerTest {
         Assert.assertTrue(fileContent.contains("EVENT1"))
         Assert.assertTrue(fileContent.contains("EVENT2"))
     }
+    
+    @Test
+    fun testAtomicFileWrite() = runBlocking {
+        // Create a mock file that we can control
+        val mockFile = MockFile("/test/atomic_log.csv")
+        
+        // Log some events
+        csvLogger.logEvent("EVENT1")
+        csvLogger.logEvent("EVENT2")
+        
+        // Flush to the mock file
+        val success = csvLogger.flushToFile(mockFile)
+        
+        // Verify success
+        Assert.assertTrue(success)
+        
+        // Verify content was written
+        val content = mockFile.getContent()
+        Assert.assertTrue(content.contains("EVENT1"))
+        Assert.assertTrue(content.contains("EVENT2"))
+    }
+    
+    @Test
+    fun testAtomicFileWriteFailure() = runBlocking {
+        // Create a mock file that will fail on rename
+        val mockFile = MockFile("/test/failing_log.csv")
+        mockFile.throwExceptionOnWrite = true
+        
+        // Log an event
+        csvLogger.logEvent("EVENT1")
+        
+        // Attempt to flush to the failing mock file
+        val success = csvLogger.flushToFile(mockFile)
+        
+        // Verify failure
+        Assert.assertFalse(success)
+        
+        // Verify buffer was not cleared (operation failed)
+        Assert.assertEquals(1, csvLogger.getEventCount())
+    }
 }

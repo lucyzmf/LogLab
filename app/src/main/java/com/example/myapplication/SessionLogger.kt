@@ -84,6 +84,7 @@ class SessionLogger(
 
     /**
      * Writes the current buffer to a file and optionally clears the buffer
+     * Uses atomic file operations to prevent corruption during writes
      *
      * @param file The file to write to
      * @param clearBufferAfterFlush Whether to clear the buffer after writing
@@ -98,9 +99,26 @@ class SessionLogger(
 
             val formattedLog = getFormattedLog()
             
-            // Write to the file
-            FileWriter(file).use { writer ->
+            // Create a temp file for atomic write
+            val tempFile = File("${file.absolutePath}.tmp")
+            
+            // Write to the temp file first
+            FileWriter(tempFile).use { writer ->
                 writer.write(formattedLog)
+                writer.flush()
+                // Ensure data is written to disk
+                val fileDescriptor = java.io.FileOutputStream(tempFile).fd
+                fileDescriptor.sync()
+            }
+            
+            // Atomic rename operation
+            val success = tempFile.renameTo(file)
+            
+            if (!success) {
+                // If rename fails, try a copy and delete as fallback
+                file.delete()
+                tempFile.copyTo(file)
+                tempFile.delete()
             }
 
             AndroidLog.d(TAG, "Flushed ${eventBuffer.size} events to ${file.absolutePath}")
