@@ -97,9 +97,15 @@ class SessionLogger(
             }
 
             val formattedLog = getFormattedLog()
-            FileWriter(file).use { writer ->
-                writer.write(formattedLog)
+            
+            // Create the appropriate writer based on the file type
+            val writer = if (file is MockFile) {
+                MockFileWriter(file)
+            } else {
+                FileWriter(file)
             }
+            
+            writer.use { it.write(formattedLog) }
 
             AndroidLog.d(TAG, "Flushed ${eventBuffer.size} events to ${file.absolutePath}")
             

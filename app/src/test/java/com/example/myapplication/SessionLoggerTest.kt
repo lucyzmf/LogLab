@@ -48,7 +48,10 @@ class SessionLoggerTest {
     
     @Before
     fun setUp() {
+        // Initialize the mock timestamp provider
         timestampProvider = MockTimestampProvider()
+        
+        // Create loggers with different formats
         csvLogger = SessionLogger(timestampProvider, SessionLogger.LogFormat.CSV)
         jsonLogger = SessionLogger(timestampProvider, SessionLogger.LogFormat.JSON)
     }
@@ -141,8 +144,8 @@ class SessionLoggerTest {
     
     @Test
     fun testFlushToFile() = runBlocking {
-        // Create a temporary file
-        val file = tempFolder.newFile("test_log.csv")
+        // Create a mock file instead of a temporary file
+        val file = MockFile("test_log.csv")
         
         // Log some events
         csvLogger.logEvent("EVENT1")
@@ -155,14 +158,14 @@ class SessionLoggerTest {
         assertEquals(0, csvLogger.getEventCount()) // Buffer should be cleared
         
         // Check file contents
-        val fileContent = file.readText()
+        val fileContent = file.getContent()
         assertTrue(fileContent.contains("EVENT1"))
         assertTrue(fileContent.contains("EVENT2"))
     }
     
     @Test
     fun testFlushToFileWithoutClearing() = runBlocking {
-        val file = tempFolder.newFile("test_log.csv")
+        val file = MockFile("test_log.csv")
         
         csvLogger.logEvent("EVENT1")
         csvLogger.logEvent("EVENT2")
@@ -172,6 +175,11 @@ class SessionLoggerTest {
         
         assertTrue(success)
         assertEquals(2, csvLogger.getEventCount()) // Buffer should still have events
+        
+        // Check file contents
+        val fileContent = file.getContent()
+        assertTrue(fileContent.contains("EVENT1"))
+        assertTrue(fileContent.contains("EVENT2"))
     }
     
     @Test
@@ -195,7 +203,7 @@ class SessionLoggerTest {
     
     @Test
     fun testConcurrentFlushAndLog() = runBlocking {
-        val file = tempFolder.newFile("concurrent_test.csv")
+        val file = MockFile("concurrent_test.csv")
         
         withContext(Dispatchers.Default) {
             val logTask = async {
@@ -218,7 +226,7 @@ class SessionLoggerTest {
         // Final flush to check all events were logged
         csvLogger.flushToFile(file)
         
-        val fileContent = file.readText()
+        val fileContent = file.getContent()
         assertTrue(fileContent.contains("LOG_DURING_FLUSH_0"))
         assertTrue(fileContent.contains("LOG_DURING_FLUSH_99"))
     }
