@@ -57,7 +57,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     
     // Serial port dependency
-    implementation("com.github.mik3y:usb-serial-for-android:3.4.0")
+    implementation ("com.github.mik3y:usb-serial-for-android:3.8.1")
 
     // Google Drive API
     implementation("com.google.android.gms:play-services-auth:20.0.0")
